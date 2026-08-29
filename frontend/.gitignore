@@ -23,3 +23,7 @@ dist/
 
 # Optional eslint cache
 .eslintcache
+
+# Expo
+.expo/
+

@@ -1,510 +1,1147 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { ThemeContext } from "../context/ThemeContext";
-import "./Navbar-simple.css";
+import React, { useContext, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  Platform,
+  Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { AuthContext } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
+import useResponsive from '../hooks/useResponsive';
 
-const Navbar = () => {
+const Navbar = ({ navigation, currentRoute }) => {
   const { user, logout, isAuthenticated } = useContext(AuthContext);
-  const { toggleThemeMode, isDark } = useContext(ThemeContext);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showAdminMenu, setShowAdminMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  
-  const dropdownRef = useRef(null);
-  const adminMenuRef = useRef(null);
-  const drawerRef = useRef(null);
-  const toggleRef = useRef(null);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { colors, isDark, toggleThemeMode } = useContext(ThemeContext);
+  const { isDesktop, insets, width } = useResponsive();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 12);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  // Close all menus on route change
-  useEffect(() => {
-    setIsMenuOpen(false);
-    setShowDropdown(false);
-    setShowAdminMenu(false);
-  }, [location.pathname]);
+  const isSuperAdmin = user?.role === 'SuperAdmin';
 
-  // Close menus and drawer on outside click or touch
-  useEffect(() => {
-    const handlePointerDown = (event) => {
-      // Auto-close mobile drawer if clicked/tapped outside drawer and toggle
-      if (
-        isMenuOpen &&
-        drawerRef.current &&
-        !drawerRef.current.contains(event.target) &&
-        toggleRef.current &&
-        !toggleRef.current.contains(event.target)
-      ) {
-        setIsMenuOpen(false);
-      }
-
-      // Auto-close profile dropdown if clicked outside
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-
-      // Auto-close admin menu if clicked outside
-      if (adminMenuRef.current && !adminMenuRef.current.contains(event.target)) {
-        setShowAdminMenu(false);
-      }
-    };
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-        setShowDropdown(false);
-        setShowAdminMenu(false);
-      }
-    };
-
-    const handleResize = () => {
-      if (window.innerWidth > 1080) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown, { passive: true });
-    document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [isMenuOpen]);
-
-  const confirmLogout = () => {
-    setShowDropdown(false);
-    setShowAdminMenu(false);
-    setIsMenuOpen(false);
-    logout();
-    navigate("/login");
+  const navigateTo = (routeName) => {
+    setDrawerOpen(false);
+    setAdminMenuOpen(false);
+    setProfileMenuOpen(false);
+    if (navigation && navigation.navigate) {
+      navigation.navigate(routeName);
+    }
   };
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const handleLogout = async () => {
+    setDrawerOpen(false);
+    setAdminMenuOpen(false);
+    setProfileMenuOpen(false);
+    await logout();
+  };
 
-  const isActive = (path) =>
-    location.pathname === path ? "nav-link active" : "nav-link";
+  const isActive = (route) => currentRoute === route;
 
-  const isAdminActive = () =>
-    [
-      "/departments",
-      "/programmes",
-      "/blocks",
-      "/rooms",
-      "/roles",
-      "/users",
-    ].includes(location.pathname);
+  const adminModules = [
+    { name: 'Departments', icon: 'business-outline', route: 'Departments' },
+    { name: 'Programmes', icon: 'school-outline', route: 'Programmes' },
+    { name: 'Campus Blocks', icon: 'cube-outline', route: 'Blocks' },
+    { name: 'Room Registry', icon: 'key-outline', route: 'Rooms' },
+    { name: 'Roles & Access', icon: 'shield-checkmark-outline', route: 'Roles' },
+    { name: 'User Directory', icon: 'people-outline', route: 'Users' },
+  ];
+
+  if (!isAuthenticated) return null;
 
   return (
-    <nav className={`nexus-navbar ${scrolled ? "scrolled" : ""} ${isMenuOpen ? "drawer-open" : ""}`}>
-      <div className="nav-main-rail">
-        {/* Brand Identity */}
-        <div className="brand-unit">
-          <Link to="/dashboard" className="brand-nexus-anchor" onClick={() => setIsMenuOpen(false)}>
-            <div className="brand-logo-pod">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            <div className="brand-telemetry">
-              <span className="title">TMS</span>
-              <div className="status-indicator">
-                <span className="status-dot"></span>
-                <span className="status-label">PORTAL</span>
-              </div>
-            </div>
-          </Link>
-        </div>
+    <>
+      {isDesktop && (adminMenuOpen || profileMenuOpen) && (
+        <TouchableOpacity
+          style={[
+            styles.desktopBackdrop,
+            Platform.OS === 'web' ? { position: 'fixed' } : StyleSheet.absoluteFillObject,
+          ]}
+          activeOpacity={1}
+          onPress={() => {
+            setAdminMenuOpen(false);
+            setProfileMenuOpen(false);
+          }}
+        />
+      )}
+      <View
+        style={[
+          styles.navbarContainer,
+          {
+            backgroundColor: colors.card,
+            borderBottomColor: colors.border,
+            paddingTop: Platform.OS !== 'web' ? Math.max(insets.top, 8) : 0,
+          },
+        ]}
+      >
+        <View style={styles.navInner}>
+          {/* Left: Brand Identity */}
+          <TouchableOpacity
+            style={styles.brandContainer}
+            onPress={() => navigateTo('Home')}
+            activeOpacity={0.8}
+          >
+          <View
+            style={[
+              styles.brandIconPod,
+              { backgroundColor: colors.primary },
+            ]}
+          >
+            <Ionicons name="layers" size={18} color="#FFFFFF" />
+          </View>
+          <View style={styles.brandTextGroup}>
+            <Text style={[styles.brandTitle, { color: colors.text }]}>TMS</Text>
+            <View style={styles.brandStatusDotRow}>
+              <View style={styles.statusDot} />
+              <Text style={[styles.brandSubtitle, { color: colors.textMuted }]}>
+                PORTAL
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
 
-        {/* Center Command Rail (Desktop) & Mobile Drawer */}
-        {isAuthenticated && (
-          <div className={`command-unit ${isMenuOpen ? "gate-open" : ""}`} ref={drawerRef}>
-            {/* Mobile Drawer Top Bar with Theme Switch & Close Button */}
-            <div className="mobile-drawer-header">
-              <div className="drawer-top-action-row">
-                <span className="drawer-nav-heading">NAVIGATION</span>
-                <div className="drawer-top-btns">
-                  <button
-                    className="drawer-theme-toggle-btn"
-                    onClick={toggleThemeMode}
-                    aria-label={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-                    title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-                    type="button"
-                  >
-                    {isDark ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="5" />
-                        <line x1="12" y1="1" x2="12" y2="3" />
-                        <line x1="12" y1="21" x2="12" y2="23" />
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                        <line x1="1" y1="12" x2="3" y2="12" />
-                        <line x1="21" y1="12" x2="23" y2="12" />
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                      </svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    className="drawer-close-btn"
-                    onClick={() => setIsMenuOpen(false)}
-                    aria-label="Close navigation menu"
-                    type="button"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <Link to="/profile" className="mobile-profile-card" onClick={() => setIsMenuOpen(false)}>
-                <div className="avatar-orb-v5">
-                  {user?.profileImage ? (
-                    <img src={user.profileImage} alt="User" />
-                  ) : (
-                    user?.username?.charAt(0).toUpperCase()
-                  )}
-                </div>
-                <div className="stub-meta">
-                  <span className="alias">{user?.username}</span>
-                  <span className="clearance">{user?.role === "SuperAdmin" ? "Super Admin" : "Standard User"}</span>
-                </div>
-                <svg className="chevron-right" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Navigation Links Group */}
-            <div className="flex-rail-horizontal">
-              <Link to="/dashboard" className={isActive("/dashboard")} onClick={() => setIsMenuOpen(false)}>
-                <svg className="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <span className="label">Dashboard</span>
-              </Link>
-
-              <Link
-                to={user?.role === "SuperAdmin" ? "/complaints" : "/my-complaints"}
-                className={isActive(user?.role === "SuperAdmin" ? "/complaints" : "/my-complaints")}
-                onClick={() => setIsMenuOpen(false)}
+        {/* Center: Desktop Navigation Links (>=1024px) */}
+        {isDesktop && (
+          <View style={styles.desktopNavGroup}>
+            <TouchableOpacity
+              onPress={() => navigateTo('Home')}
+              style={[
+                styles.desktopNavLink,
+                isActive('Home') && {
+                  backgroundColor: colors.cardSecondary,
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
+              <Ionicons
+                name="grid-outline"
+                size={16}
+                color={isActive('Home') ? colors.primary : colors.textMuted}
+              />
+              <Text
+                style={[
+                  styles.desktopNavText,
+                  {
+                    color: isActive('Home') ? colors.primary : colors.text,
+                    fontWeight: isActive('Home') ? '700' : '500',
+                  },
+                ]}
               >
-                <svg className="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                <span className="label">{user?.role === "SuperAdmin" ? "Tickets" : "My Tickets"}</span>
-              </Link>
+                Dashboard
+              </Text>
+            </TouchableOpacity>
 
-              <Link to="/complaints/new" className={`${isActive("/complaints/new")} nav-link-cta`} onClick={() => setIsMenuOpen(false)}>
-                <svg className="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                <span className="label">New Ticket</span>
-              </Link>
+            <TouchableOpacity
+              onPress={() =>
+                navigateTo(isSuperAdmin ? 'Complaints' : 'MyComplaints')
+              }
+              style={[
+                styles.desktopNavLink,
+                (isActive('Complaints') || isActive('MyComplaints')) && {
+                  backgroundColor: colors.cardSecondary,
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
+              <Ionicons
+                name="document-text-outline"
+                size={16}
+                color={
+                  isActive('Complaints') || isActive('MyComplaints')
+                    ? colors.primary
+                    : colors.textMuted
+                }
+              />
+              <Text
+                style={[
+                  styles.desktopNavText,
+                  {
+                    color:
+                      isActive('Complaints') || isActive('MyComplaints')
+                        ? colors.primary
+                        : colors.text,
+                    fontWeight:
+                      isActive('Complaints') || isActive('MyComplaints')
+                        ? '700'
+                        : '500',
+                  },
+                ]}
+              >
+                {isSuperAdmin ? 'Tickets' : 'My Tickets'}
+              </Text>
+            </TouchableOpacity>
 
-              {user?.role === "SuperAdmin" && (
-                <>
-                  <Link to="/reports" className={isActive("/reports")} onClick={() => setIsMenuOpen(false)}>
-                    <svg className="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="20" x2="18" y2="10" />
-                      <line x1="12" y1="20" x2="12" y2="4" />
-                      <line x1="6" y1="20" x2="6" y2="14" />
-                    </svg>
-                    <span className="label">Reports</span>
-                  </Link>
+            <TouchableOpacity
+              onPress={() => navigateTo('ComplaintForm')}
+              style={[
+                styles.desktopNavCta,
+                { backgroundColor: colors.primary },
+              ]}
+            >
+              <Ionicons name="add" size={16} color="#FFFFFF" />
+              <Text style={styles.desktopNavCtaText}>Raise Ticket</Text>
+            </TouchableOpacity>
 
-                  {/* Desktop Admin Modules Dropdown */}
-                  <div className="admin-menu-container desktop-only-menu" ref={adminMenuRef}>
-                    <button
-                      className={`nav-link admin-trigger ${isAdminActive() ? "active" : ""} ${showAdminMenu ? "open" : ""}`}
-                      onClick={() => setShowAdminMenu(!showAdminMenu)}
-                      type="button"
+            {isSuperAdmin && (
+              <>
+                <TouchableOpacity
+                  onPress={() => navigateTo('Reports')}
+                  style={[
+                    styles.desktopNavLink,
+                    isActive('Reports') && {
+                      backgroundColor: colors.cardSecondary,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="bar-chart-outline"
+                    size={16}
+                    color={isActive('Reports') ? colors.primary : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.desktopNavText,
+                      {
+                        color: isActive('Reports') ? colors.primary : colors.text,
+                        fontWeight: isActive('Reports') ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    Reports
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Admin Modules Dropdown Trigger */}
+                <View style={{ position: 'relative' }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setAdminMenuOpen(!adminMenuOpen);
+                      setProfileMenuOpen(false);
+                    }}
+                    style={[
+                      styles.desktopNavLink,
+                      adminMenuOpen && {
+                        backgroundColor: colors.cardSecondary,
+                        borderColor: colors.primary,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="settings-outline"
+                      size={16}
+                      color={colors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.desktopNavText,
+                        { color: colors.text, fontWeight: '500' },
+                      ]}
                     >
-                      <svg className="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="7" height="7" />
-                        <rect x="14" y="3" width="7" height="7" />
-                        <rect x="14" y="14" width="7" height="7" />
-                        <rect x="3" y="14" width="7" height="7" />
-                      </svg>
-                      <span className="label">Administration</span>
-                      <svg className="chevron-mini" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
+                      Administration
+                    </Text>
+                    <Ionicons
+                      name={adminMenuOpen ? 'chevron-up' : 'chevron-down'}
+                      size={14}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
 
-                    {showAdminMenu && (
-                      <div className="admin-popover-menu">
-                        <div className="admin-popover-header">
-                          <span className="popover-badge-pill">SYSTEM CONFIGURATION</span>
-                          <span className="popover-count">6 MODULES</span>
-                        </div>
-                        <div className="admin-popover-grid">
-                          <Link to="/departments" className={`admin-popover-item ${location.pathname === "/departments" ? "active" : ""}`} onClick={() => setShowAdminMenu(false)}>
-                            <div className="popover-icon-box">🏢</div>
-                            <div className="popover-text">
-                              <span className="item-title">Departments</span>
-                              <span className="item-desc">Academic units</span>
-                            </div>
-                          </Link>
-
-                          <Link to="/programmes" className={`admin-popover-item ${location.pathname === "/programmes" ? "active" : ""}`} onClick={() => setShowAdminMenu(false)}>
-                            <div className="popover-icon-box">🎓</div>
-                            <div className="popover-text">
-                              <span className="item-title">Programmes</span>
-                              <span className="item-desc">Degree programs</span>
-                            </div>
-                          </Link>
-
-                          <Link to="/blocks" className={`admin-popover-item ${location.pathname === "/blocks" ? "active" : ""}`} onClick={() => setShowAdminMenu(false)}>
-                            <div className="popover-icon-box">🏗️</div>
-                            <div className="popover-text">
-                              <span className="item-title">Blocks</span>
-                              <span className="item-desc">Campus buildings</span>
-                            </div>
-                          </Link>
-
-                          <Link to="/rooms" className={`admin-popover-item ${location.pathname === "/rooms" ? "active" : ""}`} onClick={() => setShowAdminMenu(false)}>
-                            <div className="popover-icon-box">🚪</div>
-                            <div className="popover-text">
-                              <span className="item-title">Rooms</span>
-                              <span className="item-desc">Classrooms & labs</span>
-                            </div>
-                          </Link>
-
-                          <Link to="/roles" className={`admin-popover-item ${location.pathname === "/roles" ? "active" : ""}`} onClick={() => setShowAdminMenu(false)}>
-                            <div className="popover-icon-box">🛡️</div>
-                            <div className="popover-text">
-                              <span className="item-title">Roles</span>
-                              <span className="item-desc">Access & permissions</span>
-                            </div>
-                          </Link>
-
-                          <Link to="/users" className={`admin-popover-item ${location.pathname === "/users" ? "active" : ""}`} onClick={() => setShowAdminMenu(false)}>
-                            <div className="popover-icon-box">👥</div>
-                            <div className="popover-text">
-                              <span className="item-title">Users</span>
-                              <span className="item-desc">User registry</span>
-                            </div>
-                          </Link>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Mobile Drawer Sub-Links */}
-                  <div className="mobile-drawer-admin-section">
-                    <div className="drawer-section-title">ADMINISTRATION</div>
-                    <Link to="/departments" className={isActive("/departments")} onClick={() => setIsMenuOpen(false)}>
-                      <span className="drawer-item-icon">🏢</span>
-                      <span className="label">Departments</span>
-                    </Link>
-                    <Link to="/programmes" className={isActive("/programmes")} onClick={() => setIsMenuOpen(false)}>
-                      <span className="drawer-item-icon">🎓</span>
-                      <span className="label">Programmes</span>
-                    </Link>
-                    <Link to="/blocks" className={isActive("/blocks")} onClick={() => setIsMenuOpen(false)}>
-                      <span className="drawer-item-icon">🏗️</span>
-                      <span className="label">Blocks</span>
-                    </Link>
-                    <Link to="/rooms" className={isActive("/rooms")} onClick={() => setIsMenuOpen(false)}>
-                      <span className="drawer-item-icon">🚪</span>
-                      <span className="label">Rooms</span>
-                    </Link>
-                    <Link to="/roles" className={isActive("/roles")} onClick={() => setIsMenuOpen(false)}>
-                      <span className="drawer-item-icon">🛡️</span>
-                      <span className="label">Roles</span>
-                    </Link>
-                    <Link to="/users" className={isActive("/users")} onClick={() => setIsMenuOpen(false)}>
-                      <span className="drawer-item-icon">👥</span>
-                      <span className="label">Users</span>
-                    </Link>
-                  </div>
-                </>
-              )}
-
-              {/* Mobile Drawer Quick Sign Out */}
-              <div className="mobile-drawer-footer">
-                <button onClick={confirmLogout} className="mobile-logout-btn" type="button">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  <span>Sign Out Session</span>
-                </button>
-              </div>
-            </div>
-          </div>
+                  {/* Popover menu for Admin modules */}
+                  {adminMenuOpen && (
+                    <View
+                      style={[
+                        styles.adminPopoverMenu,
+                        {
+                          backgroundColor: colors.card,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.popoverHeader}>
+                        <Text
+                          style={[
+                            styles.popoverHeaderTitle,
+                            { color: colors.textMuted },
+                          ]}
+                        >
+                          SYSTEM MODULES
+                        </Text>
+                      </View>
+                      {adminModules.map((m, idx) => (
+                        <TouchableOpacity
+                          key={idx}
+                          style={[
+                            styles.popoverItem,
+                            isActive(m.route) && {
+                              backgroundColor: colors.cardSecondary,
+                            },
+                          ]}
+                          onPress={() => navigateTo(m.route)}
+                        >
+                          <Ionicons
+                            name={m.icon}
+                            size={18}
+                            color={
+                              isActive(m.route)
+                                ? colors.primary
+                                : colors.textMuted
+                            }
+                            style={{ marginRight: 10 }}
+                          />
+                          <Text
+                            style={[
+                              styles.popoverItemText,
+                              {
+                                color: isActive(m.route)
+                                  ? colors.primary
+                                  : colors.text,
+                                fontWeight: isActive(m.route) ? '700' : '500',
+                              },
+                            ]}
+                          >
+                            {m.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </>
+            )}
+          </View>
         )}
 
-        {/* Identity & User Actions (Right Desktop / Mobile Actions) */}
-        <div className="profile-unit" ref={dropdownRef}>
-          {isAuthenticated ? (
-            <>
-              {/* Desktop Dark / Light Mode Toggle Button */}
-              <button
-                className="theme-toggle-nav-btn desktop-only-btn"
-                onClick={toggleThemeMode}
-                aria-label={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-                title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-                type="button"
-              >
-                {isDark ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" />
-                    <line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" />
-                    <line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                  </svg>
-                )}
-              </button>
-
-              <div className="identity-capsule-v5">
-                <button
-                  className={`identity-trigger-v5 ${showDropdown ? "active" : ""}`}
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  title="Account Settings"
-                  type="button"
-                >
-                  <div className="avatar-wrapper-v5">
-                    <div className="avatar-orb-v5">
-                      {user?.profileImage ? (
-                        <img src={user.profileImage} alt="User" />
-                      ) : (
-                        user?.username?.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <span className="online-dot-ring"></span>
-                  </div>
-                  <div className="identity-meta-v5">
-                    <span className="alias">{user?.username}</span>
-                    <span className="clearance-tag">{user?.role === "SuperAdmin" ? "SUPERADMIN" : "USER"}</span>
-                  </div>
-                  <span className="dropdown-chevron">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </span>
-                </button>
-
-                {/* Profile Dropdown Popover */}
-                {showDropdown && (
-                  <div className="nav-profile-dropdown">
-                    <div className="dropdown-user-header">
-                      <div className="avatar-orb-v5 large">
-                        {user?.profileImage ? (
-                          <img src={user.profileImage} alt="User" />
-                        ) : (
-                          user?.username?.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div className="dropdown-user-info">
-                        <span className="dropdown-name">{user?.username}</span>
-                        <span className="dropdown-email">{user?.email || "System Account"}</span>
-                        <span className="dropdown-badge">{user?.role}</span>
-                      </div>
-                    </div>
-
-                    <div className="dropdown-divider"></div>
-
-                    <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>
-                      <svg className="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                      <span>Account Profile</span>
-                    </Link>
-
-                    <Link to="/dashboard" className="dropdown-item" onClick={() => setShowDropdown(false)}>
-                      <svg className="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="7" height="9" />
-                        <rect x="14" y="3" width="7" height="5" />
-                        <rect x="14" y="12" width="7" height="9" />
-                        <rect x="3" y="16" width="7" height="5" />
-                      </svg>
-                      <span>Overview Dashboard</span>
-                    </Link>
-
-                    <div className="dropdown-divider"></div>
-
-                    <button className="dropdown-logout-btn" onClick={confirmLogout} type="button">
-                      <svg className="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <polyline points="16 17 21 12 16 7" />
-                        <line x1="21" y1="12" x2="9" y2="12" />
-                      </svg>
-                      <span>Log Out Session</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <Link to="/login" className="login-nexus-cta">
-              <span>Sign In</span>
-            </Link>
-          )}
-
-          {/* Animated Hamburger Toggle */}
-          <button
-            className={`nexus-toggle ${isMenuOpen ? "active" : ""}`}
-            onClick={toggleMenu}
-            ref={toggleRef}
-            aria-label="Toggle navigation drawer"
-            type="button"
+        {/* Right: Actions & Profile */}
+        <View style={styles.navRightGroup}>
+          {/* Dark / Light Mode Switch */}
+          <TouchableOpacity
+            style={[
+              styles.iconBtn,
+              {
+                backgroundColor: colors.cardSecondary,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={toggleThemeMode}
+            activeOpacity={0.7}
+            accessibilityLabel="Toggle Dark and Light Mode"
           >
-            <span className="hamburger-bar bar-1"></span>
-            <span className="hamburger-bar bar-2"></span>
-            <span className="hamburger-bar bar-3"></span>
-          </button>
-        </div>
-      </div>
+            <Ionicons
+              name={isDark ? 'sunny-outline' : 'moon-outline'}
+              size={18}
+              color={colors.text}
+            />
+          </TouchableOpacity>
 
-      {/* Blurred Backdrop Overlay */}
-      <div
-        className={`mobile-overlay ${isMenuOpen ? "active" : ""}`}
-        onClick={() => setIsMenuOpen(false)}
-        onTouchStart={() => setIsMenuOpen(false)}
-        aria-hidden="true"
-      ></div>
-    </nav>
+          {/* Desktop Profile Capsule */}
+          {isDesktop ? (
+            <View style={{ position: 'relative' }}>
+              <TouchableOpacity
+                style={[
+                  styles.profileCapsule,
+                  {
+                    backgroundColor: colors.cardSecondary,
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  setProfileMenuOpen(!profileMenuOpen);
+                  setAdminMenuOpen(false);
+                }}
+              >
+                <View
+                  style={[
+                    styles.avatarOrb,
+                    { backgroundColor: colors.primary },
+                  ]}
+                >
+                  {user?.profileImage ? (
+                    <Image
+                      source={{ uri: user.profileImage }}
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <Text style={styles.avatarLetter}>
+                      {user?.username?.charAt(0).toUpperCase() || 'U'}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.profileMeta}>
+                  <Text
+                    style={[styles.profileName, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
+                    {user?.username || 'User'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.profileClearance,
+                      { color: isSuperAdmin ? colors.primary : colors.textMuted },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {isSuperAdmin ? 'SuperAdmin' : 'User'}
+                  </Text>
+                </View>
+                <Ionicons
+                  name={profileMenuOpen ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+
+              {/* Profile dropdown popover */}
+              {profileMenuOpen && (
+                <View
+                  style={[
+                    styles.profilePopover,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.profilePopoverHeader}>
+                    <Text
+                      style={[styles.popoverUserName, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {user?.username}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.popoverUserEmail,
+                        { color: colors.textMuted },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {user?.email}
+                    </Text>
+                  </View>
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                  <TouchableOpacity
+                    style={styles.popoverItem}
+                    onPress={() => navigateTo('Profile')}
+                  >
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={18}
+                      color={colors.textMuted}
+                      style={{ marginRight: 10 }}
+                    />
+                    <Text
+                      style={[styles.popoverItemText, { color: colors.text }]}
+                    >
+                      Account Profile
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.popoverItem}
+                    onPress={() => navigateTo('Home')}
+                  >
+                    <Ionicons
+                      name="grid-outline"
+                      size={18}
+                      color={colors.textMuted}
+                      style={{ marginRight: 10 }}
+                    />
+                    <Text
+                      style={[styles.popoverItemText, { color: colors.text }]}
+                    >
+                      Dashboard Overview
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                  <TouchableOpacity
+                    style={styles.popoverItem}
+                    onPress={handleLogout}
+                  >
+                    <Ionicons
+                      name="log-out-outline"
+                      size={18}
+                      color={colors.danger}
+                      style={{ marginRight: 10 }}
+                    />
+                    <Text
+                      style={[
+                        styles.popoverItemText,
+                        { color: colors.danger, fontWeight: '600' },
+                      ]}
+                    >
+                      Sign Out Session
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ) : (
+            /* Mobile & Tablet Hamburger Toggle (<1024px) */
+            <TouchableOpacity
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: colors.cardSecondary,
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => setDrawerOpen(true)}
+              accessibilityLabel="Open Navigation Menu"
+            >
+              <Ionicons name="menu-outline" size={22} color={colors.text} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Mobile Drawer Modal */}
+      {!isDesktop && (
+        <Modal
+          visible={drawerOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setDrawerOpen(false)}
+        >
+          <View style={styles.mobileDrawerOverlay}>
+            <TouchableOpacity
+              style={styles.mobileDrawerBackdrop}
+              activeOpacity={1}
+              onPress={() => setDrawerOpen(false)}
+            />
+            <View
+              style={[
+                styles.mobileDrawerSheet,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  paddingTop: Math.max(insets.top, 16) + 8,
+                  paddingBottom: Math.max(insets.bottom, 16) + 8,
+                  width: Math.min(340, width * 0.85),
+                },
+              ]}
+            >
+              {/* Drawer Top Row */}
+              <View style={styles.drawerHeaderRow}>
+                <Text style={[styles.drawerNavTitle, { color: colors.textMuted }]}>
+                  NAVIGATION MENU
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setDrawerOpen(false)}
+                  style={styles.drawerCloseBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* User Identity Card */}
+              <TouchableOpacity
+                style={[
+                  styles.drawerUserCard,
+                  {
+                    backgroundColor: colors.cardSecondary,
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => navigateTo('Profile')}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[
+                    styles.avatarOrb,
+                    { backgroundColor: colors.primary, width: 44, height: 44, borderRadius: 22 },
+                  ]}
+                >
+                  {user?.profileImage ? (
+                    <Image
+                      source={{ uri: user.profileImage }}
+                      style={[styles.avatarImage, { width: 44, height: 44, borderRadius: 22 }]}
+                    />
+                  ) : (
+                    <Text style={[styles.avatarLetter, { fontSize: 18 }]}>
+                      {user?.username?.charAt(0).toUpperCase() || 'U'}
+                    </Text>
+                  )}
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[styles.drawerUserName, { color: colors.text }]} numberOfLines={1}>
+                    {user?.username || 'User'}
+                  </Text>
+                  <Text style={[styles.drawerUserEmail, { color: colors.textMuted }]} numberOfLines={1}>
+                    {user?.email || ''}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.drawerClearance,
+                      { color: isSuperAdmin ? colors.primary : colors.textMuted },
+                    ]}
+                  >
+                    {isSuperAdmin ? 'SuperAdmin Clearance' : 'Standard User'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              {/* Drawer Scrollable Links */}
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <TouchableOpacity
+                  style={[
+                    styles.drawerNavLink,
+                    isActive('Home') && {
+                      backgroundColor: colors.cardSecondary,
+                    },
+                  ]}
+                  onPress={() => navigateTo('Home')}
+                >
+                  <Ionicons
+                    name="grid-outline"
+                    size={20}
+                    color={isActive('Home') ? colors.primary : colors.text}
+                    style={{ marginRight: 14 }}
+                  />
+                  <Text
+                    style={[
+                      styles.drawerNavText,
+                      {
+                        color: isActive('Home') ? colors.primary : colors.text,
+                        fontWeight: isActive('Home') ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    Dashboard Overview
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.drawerNavLink,
+                    (isActive('Complaints') || isActive('MyComplaints')) && {
+                      backgroundColor: colors.cardSecondary,
+                    },
+                  ]}
+                  onPress={() =>
+                    navigateTo(isSuperAdmin ? 'Complaints' : 'MyComplaints')
+                  }
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={20}
+                    color={
+                      isActive('Complaints') || isActive('MyComplaints')
+                        ? colors.primary
+                        : colors.text
+                    }
+                    style={{ marginRight: 14 }}
+                  />
+                  <Text
+                    style={[
+                      styles.drawerNavText,
+                      {
+                        color:
+                          isActive('Complaints') || isActive('MyComplaints')
+                            ? colors.primary
+                            : colors.text,
+                        fontWeight:
+                          isActive('Complaints') || isActive('MyComplaints')
+                            ? '700'
+                            : '500',
+                      },
+                    ]}
+                  >
+                    {isSuperAdmin ? 'Ticket Registry' : 'My Complaints'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.drawerNavLink,
+                    isActive('ComplaintForm') && {
+                      backgroundColor: colors.cardSecondary,
+                    },
+                  ]}
+                  onPress={() => navigateTo('ComplaintForm')}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={20}
+                    color={colors.primary}
+                    style={{ marginRight: 14 }}
+                  />
+                  <Text
+                    style={[
+                      styles.drawerNavText,
+                      { color: colors.primary, fontWeight: '700' },
+                    ]}
+                  >
+                    Raise Ticket
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.drawerNavLink,
+                    isActive('Profile') && {
+                      backgroundColor: colors.cardSecondary,
+                    },
+                  ]}
+                  onPress={() => navigateTo('Profile')}
+                >
+                  <Ionicons
+                    name="person-outline"
+                    size={20}
+                    color={isActive('Profile') ? colors.primary : colors.text}
+                    style={{ marginRight: 14 }}
+                  />
+                  <Text
+                    style={[
+                      styles.drawerNavText,
+                      {
+                        color: isActive('Profile') ? colors.primary : colors.text,
+                        fontWeight: isActive('Profile') ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    Account Profile
+                  </Text>
+                </TouchableOpacity>
+
+                {isSuperAdmin && (
+                  <>
+                    <TouchableOpacity
+                      style={[
+                        styles.drawerNavLink,
+                        isActive('Reports') && {
+                          backgroundColor: colors.cardSecondary,
+                        },
+                      ]}
+                      onPress={() => navigateTo('Reports')}
+                    >
+                      <Ionicons
+                        name="bar-chart-outline"
+                        size={20}
+                        color={isActive('Reports') ? colors.primary : colors.text}
+                        style={{ marginRight: 14 }}
+                      />
+                      <Text
+                        style={[
+                          styles.drawerNavText,
+                          {
+                            color: isActive('Reports')
+                              ? colors.primary
+                              : colors.text,
+                            fontWeight: isActive('Reports') ? '700' : '500',
+                          },
+                        ]}
+                      >
+                        Analytics & Reports
+                      </Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.drawerSectionHeader}>
+                      <Text
+                        style={[
+                          styles.drawerSectionTitle,
+                          { color: colors.textMuted },
+                        ]}
+                      >
+                        ADMINISTRATION MASTER
+                      </Text>
+                    </View>
+
+                    {adminModules.map((m, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={[
+                          styles.drawerNavLink,
+                          isActive(m.route) && {
+                            backgroundColor: colors.cardSecondary,
+                          },
+                        ]}
+                        onPress={() => navigateTo(m.route)}
+                      >
+                        <Ionicons
+                          name={m.icon}
+                          size={18}
+                          color={
+                            isActive(m.route) ? colors.primary : colors.textMuted
+                          }
+                          style={{ marginRight: 14 }}
+                        />
+                        <Text
+                          style={[
+                            styles.drawerNavText,
+                            {
+                              color: isActive(m.route)
+                                ? colors.primary
+                                : colors.text,
+                              fontWeight: isActive(m.route) ? '700' : '500',
+                            },
+                          ]}
+                        >
+                          {m.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </>
+                )}
+              </ScrollView>
+
+              {/* Drawer Footer: Logout */}
+              <View
+                style={[
+                  styles.drawerFooter,
+                  { borderTopColor: colors.border },
+                ]}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.drawerLogoutBtn,
+                    { backgroundColor: 'rgba(239, 68, 68, 0.12)' },
+                  ]}
+                  onPress={handleLogout}
+                >
+                  <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+                  <Text
+                    style={[
+                      styles.drawerLogoutText,
+                      { color: colors.danger },
+                    ]}
+                  >
+                    Sign Out Session
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
+    </>
   );
 };
+
+const styles = StyleSheet.create({
+  navbarContainer: {
+    width: '100%',
+    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    zIndex: 100,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: { elevation: 4 },
+      web: {
+        position: 'sticky',
+        top: 0,
+        boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+      },
+    }),
+  },
+  navInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 58,
+    maxWidth: 1300,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  brandContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  brandIconPod: {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandTextGroup: {
+    marginLeft: 10,
+  },
+  brandTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  brandStatusDotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 4,
+  },
+  brandSubtitle: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
+  desktopNavGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  desktopNavLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    gap: 6,
+  },
+  desktopNavText: {
+    fontSize: 14,
+  },
+  desktopNavCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    gap: 4,
+  },
+  desktopNavCtaText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  navRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 8,
+  },
+  avatarOrb: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 32,
+    height: 32,
+  },
+  avatarLetter: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  profileMeta: {
+    maxWidth: 110,
+  },
+  profileName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  profileClearance: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  adminPopoverMenu: {
+    position: 'absolute',
+    top: 44,
+    right: 0,
+    width: 220,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 8,
+    zIndex: 1000,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+      },
+      android: { elevation: 8 },
+      web: { boxShadow: '0 10px 25px rgba(0,0,0,0.2)' },
+    }),
+  },
+  popoverHeader: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  popoverHeaderTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  popoverItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  popoverItemText: {
+    fontSize: 13,
+  },
+  profilePopover: {
+    position: 'absolute',
+    top: 44,
+    right: 0,
+    width: 220,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 8,
+    zIndex: 1000,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+      },
+      android: { elevation: 8 },
+      web: { boxShadow: '0 10px 25px rgba(0,0,0,0.2)' },
+    }),
+  },
+  profilePopoverHeader: {
+    padding: 10,
+  },
+  popoverUserName: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  popoverUserEmail: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 4,
+  },
+  mobileDrawerOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  mobileDrawerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  mobileDrawerSheet: {
+    height: '100%',
+    paddingHorizontal: 18,
+    borderLeftWidth: 1,
+  },
+  drawerHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 14,
+  },
+  drawerNavTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  drawerCloseBtn: {
+    padding: 4,
+  },
+  drawerUserCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  drawerUserName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  drawerUserEmail: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+  drawerClearance: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  drawerNavLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginVertical: 2,
+  },
+  drawerNavText: {
+    fontSize: 14,
+  },
+  drawerSectionHeader: {
+    marginTop: 18,
+    marginBottom: 6,
+    paddingHorizontal: 12,
+  },
+  drawerSectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  drawerFooter: {
+    paddingTop: 14,
+    borderTopWidth: 1,
+  },
+  drawerLogoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 8,
+  },
+  drawerLogoutText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  desktopBackdrop: {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 90,
+    backgroundColor: 'transparent',
+  },
+});
 
 export default Navbar;

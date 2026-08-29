@@ -1,151 +1,206 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance, Platform } from 'react-native';
 
 export const ThemeContext = createContext();
 
 export const themes = [
-    {
-        id: 'purple',
-        name: 'Electric Purple',
-        color: '#6C47FF',
-        hover: '#5835E5',
-        gradient: 'linear-gradient(135deg, #6C47FF 0%, #4F46E5 100%)'
-    },
-    {
-        id: 'blue',
-        name: 'Ocean Blue',
-        color: '#2563EB',
-        hover: '#1D4ED8',
-        gradient: 'linear-gradient(135deg, #2563EB 0%, #06B6D4 100%)'
-    },
-    {
-        id: 'emerald',
-        name: 'Emerald Green',
-        color: '#059669',
-        hover: '#047857',
-        gradient: 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
-    },
-    {
-        id: 'amber',
-        name: 'Sunset Amber',
-        color: '#D97706',
-        hover: '#B45309',
-        gradient: 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
-    },
-    {
-        id: 'rose',
-        name: 'Cyber Rose',
-        color: '#E11D48',
-        hover: '#BE123C',
-        gradient: 'linear-gradient(135deg, #E11D48 0%, #F43F5E 100%)'
-    }
+  {
+    id: 'purple',
+    name: 'Electric Purple',
+    color: '#6C47FF',
+    hover: '#5835E5',
+    lightBg: '#F3F0FF',
+    gradient: ['#6C47FF', '#4F46E5'],
+  },
+  {
+    id: 'blue',
+    name: 'Ocean Blue',
+    color: '#2563EB',
+    hover: '#1D4ED8',
+    lightBg: '#EFF6FF',
+    gradient: ['#2563EB', '#06B6D4'],
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald Green',
+    color: '#059669',
+    hover: '#047857',
+    lightBg: '#ECFDF5',
+    gradient: ['#059669', '#10B981'],
+  },
+  {
+    id: 'amber',
+    name: 'Sunset Amber',
+    color: '#D97706',
+    hover: '#B45309',
+    lightBg: '#FFFBEB',
+    gradient: ['#D97706', '#F59E0B'],
+  },
+  {
+    id: 'rose',
+    name: 'Cyber Rose',
+    color: '#E11D48',
+    hover: '#BE123C',
+    lightBg: '#FFF1F2',
+    gradient: ['#E11D48', '#F43F5E'],
+  },
 ];
 
 export const ThemeProvider = ({ children }) => {
-    const [themeMode, setThemeMode] = useState(() => {
-        const saved = localStorage.getItem('theme-mode');
-        if (saved === 'dark' || saved === 'light') return saved;
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    });
+  const [themeMode, setThemeMode] = useState('dark');
+  const [currentThemeId, setCurrentThemeId] = useState('purple');
+  const [isLoaded, setIsLoaded] = useState(false);
 
-    const [currentThemeId, setCurrentThemeId] = useState(() => {
-        return localStorage.getItem('app-theme') || 'purple';
-    });
-
-    const applyTheme = useCallback((themeId = currentThemeId, mode = themeMode) => {
-        const activeTheme = themes.find(t => t.id === themeId) || themes[0];
-        const isDark = mode === 'dark';
-        const root = document.documentElement;
-
-        // Mode Attributes
-        root.setAttribute('data-theme', mode);
-        document.body.setAttribute('data-theme', mode);
-
-        // Accent Colors
-        root.style.setProperty('--primary', activeTheme.color);
-        root.style.setProperty('--primary-hover', activeTheme.hover);
-        root.style.setProperty('--primary-gradient', activeTheme.gradient);
-        root.style.setProperty('--theme-color', activeTheme.color);
-        root.style.setProperty('--theme-hover', activeTheme.hover);
-        root.style.setProperty('--theme-gradient', activeTheme.gradient);
-
-        // Mode Variables
-        if (isDark) {
-            root.style.setProperty('--bg-page', '#0B0D13');
-            root.style.setProperty('--card-bg', '#131722');
-            root.style.setProperty('--sidebar-bg', '#0F121C');
-            root.style.setProperty('--text-main', '#F8FAFC');
-            root.style.setProperty('--text-secondary', '#94A3B8');
-            root.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.1)');
-            root.style.setProperty('--border-soft', 'rgba(255, 255, 255, 0.08)');
-            root.style.setProperty('--nav-bg', 'rgba(15, 18, 28, 0.92)');
-            root.style.setProperty('--nav-bg-scrolled', 'rgba(11, 13, 19, 0.98)');
-            root.style.setProperty('--nav-border', 'rgba(255, 255, 255, 0.09)');
-            root.style.setProperty('--table-header-bg', '#181C2B');
-            root.style.setProperty('--table-hover-bg', '#1E2336');
-            root.style.setProperty('--input-bg', '#161A26');
-            root.style.setProperty('--input-border', 'rgba(255, 255, 255, 0.14)');
-            root.style.setProperty('--item-hover', 'rgba(255, 255, 255, 0.06)');
+  useEffect(() => {
+    const loadStoredTheme = async () => {
+      try {
+        const storedMode = await AsyncStorage.getItem('theme-mode');
+        const storedThemeId = await AsyncStorage.getItem('app-theme');
+        if (storedMode) {
+          setThemeMode(storedMode);
         } else {
-            root.style.setProperty('--bg-page', '#F7F7FB');
-            root.style.setProperty('--card-bg', '#FFFFFF');
-            root.style.setProperty('--sidebar-bg', '#FFFFFF');
-            root.style.setProperty('--text-main', '#171717');
-            root.style.setProperty('--text-secondary', '#71717A');
-            root.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.08)');
-            root.style.setProperty('--border-soft', 'rgba(0, 0, 0, 0.06)');
-            root.style.setProperty('--nav-bg', 'rgba(255, 255, 255, 0.88)');
-            root.style.setProperty('--nav-bg-scrolled', 'rgba(255, 255, 255, 0.96)');
-            root.style.setProperty('--nav-border', 'rgba(0, 0, 0, 0.07)');
-            root.style.setProperty('--table-header-bg', '#FAFAFA');
-            root.style.setProperty('--table-hover-bg', '#F8FAFC');
-            root.style.setProperty('--input-bg', '#FFFFFF');
-            root.style.setProperty('--input-border', 'rgba(0, 0, 0, 0.12)');
-            root.style.setProperty('--item-hover', '#F4F4F5');
+          const colorScheme = Appearance.getColorScheme();
+          setThemeMode(colorScheme === 'light' ? 'light' : 'dark');
         }
-
-        const hexToRgb = (hex) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return `${r}, ${g}, ${b}`;
-        };
-
-        root.style.setProperty('--theme-color-rgb', hexToRgb(activeTheme.color));
-        localStorage.setItem('app-theme', themeId);
-        localStorage.setItem('theme-mode', mode);
-        setCurrentThemeId(themeId);
-        setThemeMode(mode);
-    }, [currentThemeId, themeMode]);
-
-    const toggleThemeMode = () => {
-        const nextMode = themeMode === 'dark' ? 'light' : 'dark';
-        applyTheme(currentThemeId, nextMode);
+        if (storedThemeId) {
+          setCurrentThemeId(storedThemeId);
+        }
+      } catch (e) {
+        console.warn('Failed to load theme preference', e);
+      } finally {
+        setIsLoaded(true);
+      }
     };
+    loadStoredTheme();
+  }, []);
 
-    const changeThemeMode = (mode) => {
-        applyTheme(currentThemeId, mode);
-    };
+  const changeThemeMode = useCallback(async (mode) => {
+    setThemeMode(mode);
+    try {
+      await AsyncStorage.setItem('theme-mode', mode);
+    } catch (e) {
+      console.warn('Failed to save theme mode', e);
+    }
+  }, []);
 
-    const changeThemeColor = (colorId) => {
-        applyTheme(colorId, themeMode);
-    };
+  const toggleThemeMode = useCallback(() => {
+    const nextMode = themeMode === 'dark' ? 'light' : 'dark';
+    changeThemeMode(nextMode);
+  }, [themeMode, changeThemeMode]);
 
-    useEffect(() => {
-        applyTheme(currentThemeId, themeMode);
-    }, [applyTheme, currentThemeId, themeMode]);
+  const changeThemeColor = useCallback(async (themeId) => {
+    setCurrentThemeId(themeId);
+    try {
+      await AsyncStorage.setItem('app-theme', themeId);
+    } catch (e) {
+      console.warn('Failed to save theme color', e);
+    }
+  }, []);
 
-    return (
-        <ThemeContext.Provider value={{
-            themeMode,
-            toggleThemeMode,
-            changeThemeMode,
-            currentThemeId,
-            changeThemeColor,
-            applyTheme,
-            themes,
-            isDark: themeMode === 'dark'
-        }}>
-            {children}
-        </ThemeContext.Provider>
-    );
+  const isDark = themeMode === 'dark';
+  const activeTheme = themes.find((t) => t.id === currentThemeId) || themes[0];
+
+  const colors = {
+    primary: activeTheme.color,
+    primaryHover: activeTheme.hover,
+    primaryLight: activeTheme.lightBg,
+    primaryGradient: activeTheme.gradient,
+    background: isDark ? '#0B0D13' : '#F7F8FC',
+    card: isDark ? '#131722' : '#FFFFFF',
+    cardSecondary: isDark ? '#181C2B' : '#F8FAFC',
+    sidebar: isDark ? '#0F121C' : '#FFFFFF',
+    text: isDark ? '#F8FAFC' : '#0F172A',
+    textMuted: isDark ? '#94A3B8' : '#64748B',
+    textDim: isDark ? '#64748B' : '#94A3B8',
+    border: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+    borderSoft: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+    borderFocus: activeTheme.color,
+    inputBg: isDark ? '#161A26' : '#FFFFFF',
+    navBg: isDark ? 'rgba(15, 18, 28, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    success: '#10B981',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    info: '#3B82F6',
+  };
+
+  const spacing = {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+    xxxl: 32,
+    hero: 48,
+  };
+
+  const radii = {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    full: 9999,
+  };
+
+  const typography = {
+    fontFamily: Platform.select({
+      ios: 'System',
+      android: 'sans-serif',
+      web: "'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif",
+    }),
+    fontSizes: {
+      xs: 11,
+      sm: 13,
+      md: 14,
+      lg: 16,
+      xl: 18,
+      xxl: 22,
+      xxxl: 26,
+      hero: 32,
+    },
+    fontWeights: {
+      regular: '400',
+      medium: '500',
+      semiBold: '600',
+      bold: '700',
+      extraBold: '800',
+      black: '900',
+    },
+  };
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.backgroundColor = colors.background;
+      document.body.style.backgroundColor = colors.background;
+      const rootEl = document.getElementById('root');
+      if (rootEl) {
+        rootEl.style.backgroundColor = colors.background;
+      }
+    }
+  }, [colors.background]);
+
+  return (
+    <ThemeContext.Provider
+      value={{
+        themeMode,
+        isDark,
+        currentThemeId,
+        activeTheme,
+        colors,
+        spacing,
+        radii,
+        typography,
+        themes,
+        toggleThemeMode,
+        changeThemeMode,
+        changeThemeColor,
+        isLoaded,
+      }}
+    >
+      {children}
+    </ThemeContext.Provider>
+  );
 };
+

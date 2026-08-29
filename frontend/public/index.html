@@ -7,21 +7,51 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <link rel="icon" type="image/x-icon" href="/TMS.ico">
   <title>Ticket Management System</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
+  <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap");
+    @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
 
-    * {
+    /* @expo/vector-icons Ionicons Web Font Definition */
+    @font-face {
+      font-family: 'ionicons';
+      src: url('https://cdn.jsdelivr.net/npm/react-native-vector-icons@10.2.0/Fonts/Ionicons.ttf') format('truetype');
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Ionicons';
+      src: url('https://cdn.jsdelivr.net/npm/react-native-vector-icons@10.2.0/Fonts/Ionicons.ttf') format('truetype');
+      font-display: swap;
+    }
+
+    *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      min-height: 100vh;
+      background-color: #0B0D13;
+      font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
     body {
-      font-family: 'Outfit', sans-serif;
-      background-color: #F7F7FB;
+      background-color: #0B0D13;
+      overflow-x: hidden;
+    }
+
+    #root {
+      width: 100%;
+      min-height: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
   </style>
 </head>

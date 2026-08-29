@@ -14,8 +14,8 @@ exports.createUser = async (req, res) => {
       phone,
       password: hashedPassword,
       role,
-      department,
-      programme,
+      department: department && department !== "" ? department : undefined,
+      programme: programme && programme !== "" ? programme : undefined,
     });
 
     await user.save();
@@ -66,9 +66,17 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { username, email, phone, role, department, programme } = req.body;
+    const updateData = { username, email, phone, role };
+    if (department !== undefined) {
+      updateData.department = department && department !== "" ? department : null;
+    }
+    if (programme !== undefined) {
+      updateData.programme = programme && programme !== "" ? programme : null;
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { username, email, phone, role, department, programme },
+      updateData,
       { new: true, runValidators: true },
     ).select("-password");
 

@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "TMS Portal",
+    "slug": "tms-portal",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "newArchEnabled": true,
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0D13"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tms.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B0D13"
+      },
+      "package": "com.tms.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "scheme": "tms",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you upload complaint evidence."
+        }
+      ],
+      "expo-status-bar"
+    ]
+  }
+}
