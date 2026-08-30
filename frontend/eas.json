@@ -14,13 +14,19 @@
       },
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://tms-app-backend.onrender.com/api"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
       },
-      "ios": {}
+      "ios": {},
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://tms-app-backend.onrender.com/api"
+      }
     }
   },
   "submit": {

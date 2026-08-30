@@ -5,13 +5,7 @@
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
-    "newArchEnabled": true,
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B0D13"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tms.app"
@@ -21,7 +15,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0D13"
       },
-      "package": "com.tms.app"
+      "package": "com.tms.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -29,13 +26,27 @@
     },
     "scheme": "tms",
     "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos to let you upload complaint evidence."
-        }
-      ],
-      "expo-status-bar"
-    ]
+  [
+    "expo-image-picker",
+    {
+      "photosPermission": "The app accesses your photos to let you upload complaint evidence."
+    }
+  ],
+  [
+    "expo-splash-screen",
+    {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0D13"
+    }
+  ],
+  "expo-status-bar",
+  "expo-font"
+],
+    "extra": {
+      "eas": {
+        "projectId": "7d638888-fe1e-457d-99ae-55903f1506de"
+      }
+    }
   }
 }

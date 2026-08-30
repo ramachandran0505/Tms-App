@@ -1,21 +1,27 @@
-import axios from 'axios/dist/browser/axios.cjs';
+import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 const resolveApiBaseUrl = () => {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  
-  if (Platform.OS === 'web') {
-    return envUrl || 'http://localhost:5001/api';
-  }
 
-  // If a custom production or specific IP URL is given that is not localhost
-  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+  // EAS / production APK
+  if (envUrl) {
     return envUrl;
   }
 
-  // Automatically extract host machine IP when testing via Expo Go on physical device
+  // Production APK fallback
+  if (!__DEV__) {
+    return 'https://tms-app-backend.onrender.com/api';
+  }
+
+  // Local web development
+  if (Platform.OS === 'web') {
+    return 'http://localhost:5001/api';
+  }
+
+  // Expo Go on physical device
   const hostUri =
     Constants.expoConfig?.hostUri ||
     Constants.manifest2?.extra?.expoClient?.hostUri ||
@@ -26,7 +32,7 @@ const resolveApiBaseUrl = () => {
     return `http://${ip}:5001/api`;
   }
 
-  // Android emulator loopback IP fallback
+  // Android emulator during local development
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:5001/api';
   }
