@@ -6,10 +6,10 @@ const fs = require('fs');
  * Creates and returns the nodemailer transporter using environment variables.
  */
 function getTransporter() {
-  const user = process.env.EMAIL_USER;
+  const user = process.env.EMAIL_USER || 'ramachandranboominathan@gmail.com';
   const pass = process.env.EMAIL_PASS;
 
-  if (!user || !pass) {
+  if (!pass) {
     return null;
   }
 

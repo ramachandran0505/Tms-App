@@ -68,9 +68,14 @@ exports.createComplaint = async (req, res) => {
     User.findById(complaint.createdBy)
       .select("username email phone")
       .then((creator) => {
-        sendComplaintNotification(complaint, creator).catch((err) => {
-          console.error("[Email Notification Error]:", err.message);
-        });
+        console.log(`[Complaint Created] Triggering email for #${complaint._id}`);
+        sendComplaintNotification(complaint, creator)
+          .then((result) => {
+            console.log(`[Complaint Notification Sent]:`, result);
+          })
+          .catch((err) => {
+            console.error("[Email Notification Error]:", err.message);
+          });
       })
       .catch((err) => {
         console.error("[Email Notification Creator Lookup Error]:", err.message);
