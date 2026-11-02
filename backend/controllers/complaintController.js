@@ -2,6 +2,7 @@ const Complaint = require("../models/Complaint");
 const User = require("../models/User");
 const Block = require("../models/Block");
 const path = require("path");
+const { sendComplaintNotification } = require("../utils/emailService");
 
 exports.deleteComplaint = async (req, res) => {
   try {
@@ -62,6 +63,18 @@ exports.createComplaint = async (req, res) => {
     }
 
     await complaint.save();
+
+    // Send email notification to ramachandranboominathan@gmail.com asynchronously
+    User.findById(complaint.createdBy)
+      .select("username email phone")
+      .then((creator) => {
+        sendComplaintNotification(complaint, creator).catch((err) => {
+          console.error("[Email Notification Error]:", err.message);
+        });
+      })
+      .catch((err) => {
+        console.error("[Email Notification Creator Lookup Error]:", err.message);
+      });
 
     res.status(201).json({ message: "Complaint created", complaint });
   } catch (error) {

@@ -86,14 +86,11 @@ const Navbar = ({ navigation, currentRoute }) => {
             onPress={() => navigateTo('Home')}
             activeOpacity={0.8}
           >
-          <View
-            style={[
-              styles.brandIconPod,
-              { backgroundColor: colors.primary },
-            ]}
-          >
-            <Ionicons name="layers" size={18} color="#FFFFFF" />
-          </View>
+          <Image
+            source={require('../../assets/icon.png')}
+            style={styles.brandIconImage}
+            resizeMode="contain"
+          />
           <View style={styles.brandTextGroup}>
             <Text style={[styles.brandTitle, { color: colors.text }]}>TMS</Text>
             <View style={styles.brandStatusDotRow}>
@@ -531,9 +528,16 @@ const Navbar = ({ navigation, currentRoute }) => {
             >
               {/* Drawer Top Row */}
               <View style={styles.drawerHeaderRow}>
-                <Text style={[styles.drawerNavTitle, { color: colors.textMuted }]}>
-                  NAVIGATION MENU
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image
+                    source={require('../../assets/icon.png')}
+                    style={styles.drawerBrandLogo}
+                    resizeMode="contain"
+                  />
+                  <Text style={[styles.drawerNavTitle, { color: colors.text, fontWeight: '800' }]}>
+                    TMS PORTAL
+                  </Text>
+                </View>
                 <TouchableOpacity
                   onPress={() => setDrawerOpen(false)}
                   style={styles.drawerCloseBtn}
@@ -862,6 +866,17 @@ const styles = StyleSheet.create({
   brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  brandIconImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+  },
+  drawerBrandLogo: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    marginRight: 8,
   },
   brandIconPod: {
     width: 36,

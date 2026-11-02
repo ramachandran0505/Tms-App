@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
@@ -73,14 +74,11 @@ const LoginScreen = ({ navigation }) => {
         {/* Top Navbar */}
         <View style={[styles.topBar, { maxWidth: Math.min(460, width - 24) }]}>
           <View style={styles.brandRow}>
-            <View
-              style={[
-                styles.logoIconPod,
-                { backgroundColor: colors.primary },
-              ]}
-            >
-              <Text style={styles.logoTextLetter}>T</Text>
-            </View>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={[styles.brandTitle, { color: colors.text }]}>TMS</Text>
           </View>
 
@@ -217,6 +215,11 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  logoImage: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
   },
   logoIconPod: {
     width: 38,

@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0B0D13"
+        "backgroundColor": "#1a427d"
       },
       "package": "com.tms.app",
       "permissions": [
